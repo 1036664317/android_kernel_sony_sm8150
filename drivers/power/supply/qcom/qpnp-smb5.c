@@ -1688,7 +1688,6 @@ static enum power_supply_property smb5_batt_props[] = {
 #if defined(CONFIG_SOMC_CHARGER_EXTENSION)
 	POWER_SUPPLY_PROP_SMART_CHARGING_STATUS,
 	POWER_SUPPLY_PROP_LRC_ENABLE,
-	POWER_SUPPLY_PROP_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_ENABLE_SHUTDOWN_AT_LOW_BATTERY,
 	POWER_SUPPLY_PROP_BOOTUP_SHUTDOWN_PHASE,
 	POWER_SUPPLY_PROP_JEITA_STEP_FCC,
@@ -1698,6 +1697,7 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_AUX_TEMP,
 	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
 #endif
+	POWER_SUPPLY_PROP_CHARGING_ENABLED,
 };
 
 #define DEBUG_ACCESSORY_TEMP_DECIDEGC	250
@@ -1869,9 +1869,6 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_LRC_ENABLE:
 		val->intval = chg->lrc_enabled;
 		break;
-	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-		rc = smblib_get_prop_charging_enabled(chg, val);
-		break;
 	case POWER_SUPPLY_PROP_ENABLE_SHUTDOWN_AT_LOW_BATTERY:
 		val->intval = chg->low_batt_shutdown_enabled;
 		break;
@@ -2015,9 +2012,6 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 		chg->lrc_enabled = val->intval;
 		smblib_somc_lrc_check(chg);
 		break;
-	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-		rc = smblib_set_prop_charging_enabled(chg, val);
-		break;
 	case POWER_SUPPLY_PROP_ENABLE_SHUTDOWN_AT_LOW_BATTERY:
 		chg->low_batt_shutdown_enabled = val->intval;
 		break;
@@ -2065,7 +2059,6 @@ static int smb5_batt_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_DIE_HEALTH:
 #if defined(CONFIG_SOMC_CHARGER_EXTENSION)
 	case POWER_SUPPLY_PROP_LRC_ENABLE:
-	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
 	case POWER_SUPPLY_PROP_ENABLE_SHUTDOWN_AT_LOW_BATTERY:
 	case POWER_SUPPLY_PROP_BOOTUP_SHUTDOWN_PHASE:
 	case POWER_SUPPLY_PROP_JEITA_STEP_FCC:
