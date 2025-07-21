@@ -864,7 +864,7 @@ config FORCE_ALLOC_FROM_DMA_ZONE
 # multi-gen LRU {
 config LRU_GEN
 	bool "Multi-Gen LRU"
-	depends on MMU
+	depends on MMU && DEBUG_FS
 	# the following options can use up the spare bits in page flags
 	depends on !MAXSMP && (64BIT || !SPARSEMEM || SPARSEMEM_VMEMMAP)
 	help
