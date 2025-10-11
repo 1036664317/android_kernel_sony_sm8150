@@ -193,6 +193,9 @@ echo "------------------------------------"
 echo "running vmalloc stability smoke test"
 echo "------------------------------------"
 ./test_vmalloc.sh smoke
+echo "running MREMAP_DONTUNMAP smoke test"
+echo "------------------------------------"
+./mremap_dontunmap
 ret_val=$?
 
 if [ $ret_val -eq 0 ]; then
@@ -204,5 +207,4 @@ else
 	echo "[FAIL]"
 	exitcode=1
 fi
-
 exit $exitcode
