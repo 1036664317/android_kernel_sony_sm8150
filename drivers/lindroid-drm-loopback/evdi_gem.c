@@ -347,9 +347,18 @@ int evdi_gem_vmap(struct evdi_gem_object *obj)
 	if (ret)
 		return ret;
 
-	obj->vmapping = vmap(obj->pages, page_count, 0, PAGE_KERNEL);
+#if KERNEL_VERSION(5, 9, 0) < LINUX_VERSION_CODE
+	obj->vmapping = vm_map_ram(obj->pages, page_count, -1);
+#else
+	obj->vmapping = vm_map_ram(obj->pages, page_count, -1, PAGE_KERNEL);
+#endif
+	obj->vmap_is_vmram = obj->vmapping != NULL;
+	if (!obj->vmapping)
+		obj->vmapping = vmap(obj->pages, page_count, 0, PAGE_KERNEL);
+
 	if (!obj->vmapping)
 		return -ENOMEM;
+
 	return 0;
 }
 
@@ -383,8 +392,13 @@ void evdi_gem_vunmap(struct evdi_gem_object *obj)
 	}
 
 	if (obj->vmapping) {
-		vunmap(obj->vmapping);
+		if (obj->vmap_is_vmram) {
+			vm_unmap_ram(obj->vmapping, DIV_ROUND_UP(obj->base.size, PAGE_SIZE));
+		} else {
+			vunmap(obj->vmapping);
+		}
 		obj->vmapping = NULL;
+		obj->vmap_is_vmram = false;
 	}
 
 	evdi_unpin_pages(obj);
@@ -494,7 +508,6 @@ static void evdi_prime_unpin(struct drm_gem_object *obj)
 }
 #endif
 
-#if KERNEL_VERSION(5, 16, 0) > LINUX_VERSION_CODE && !defined(EL8) && !defined(EL9)
 static struct sg_table *evdi_dup_sg_table(const struct sg_table *src)
 {
 	struct sg_table *dst;
@@ -519,23 +532,17 @@ static struct sg_table *evdi_dup_sg_table(const struct sg_table *src)
 	for (i = 0; i < nents; i++, s = sg_next(s), d = sg_next(d)) {
 		struct page *page = sg_page(s);
 		unsigned int len = s->length;
-		unsigned int off = 0;
 		sg_set_page(d, page, len, s->offset);
 	}
 	return dst;
 }
-#endif //KVER < 5.16
 
 struct sg_table *evdi_prime_get_sg_table(struct drm_gem_object *obj)
 {
 	struct evdi_gem_object *bo = to_evdi_bo(obj);
 
 	if (bo->sg) {
-#if KERNEL_VERSION(5, 16, 0) <= LINUX_VERSION_CODE || defined(EL8) || defined(EL9)
-		return drm_prime_dup_sg_table(bo->sg);
-#else
 		return evdi_dup_sg_table(bo->sg);
-#endif
 	}
 
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE || defined(EL8)
