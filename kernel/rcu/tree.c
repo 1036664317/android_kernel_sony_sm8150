@@ -3332,19 +3332,19 @@ static void kfree_rcu_work(struct work_struct *work)
 		if (cmpxchg(&krcp->bcached, NULL, bhead))
 			free_page((unsigned long) bhead);
 
-		cond_resched_rcu_qs();
+		cond_resched_tasks_rcu_qs();
 	}
 
 	/*
 	 * Emergency case only. It can happen under low memory
 	 * condition when an allocation gets failed, so the "bulk"
-	 * path can not be temporary maintained.
+	 * path can not be temporarily maintained.
 	 */
 	for (; head; head = next) {
 		next = head->next;
 		debug_rcu_head_unqueue(head);
 		__rcu_reclaim(rcu_state_p->name, head);
-		cond_resched_rcu_qs();
+		cond_resched_tasks_rcu_qs();
 	}
 }
 
